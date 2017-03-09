@@ -2,12 +2,15 @@
 
 namespace app\controllers;
 
+use app\models\Images;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use app\models\Form;
 use app\models\ContactForm;
+use app\models\LoginForm;
+use yii\web\UploadedFile;
 
 class SiteController extends Controller
 {
@@ -60,26 +63,36 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        $Form = new Form();
+        $model = new Form();
+        $images = new Images();
         return $this->render('form',array(
-           'Form' => $Form,
+           'model' => $model,'images' => $images
         ));
-
     }
 public function actionForm()
 {
-    $Form = new Form();
- if(isset($_POST['Form']))
-        {
-            $Form->attributes = Yii::$app->request->post('Form');
-            if($Form->validate() && $Form->insertForm())
-            {
-                return $this->goHome();
+    $model = new Form();
+    $images = new Images();
+    if($model->load(Yii::$app->request->post()) && $images->load(Yii::$app->request->post()) && $model->save()){
+            $images->form_id = $model->id;
+            $images->imagesFiles = UploadedFile::getInstances($images,'imagesFiles');
+        $message = Yii::$app->mailer->compose()
+            ->setFrom('prozrostl@gmail.com')
+            ->setTo($model->email)
+            ->setSubject('Hello from Yii2')
+            ->setTextBody('Имя' . $model->name . '' . 'Возраст' . $model->age . '' . 'Рост' . $model->height . '' . 'Вес' . $model->weight . '' . 'Нужна ли техника' . $model->techies . '' . 'Уровень английского' . $model->english_level . '');
+            foreach ($images->imagesFiles as $file){
+                $folder = (\Yii::$app->basePath.'/web/uploads/'.$file->name);
+                $file->saveAs(\Yii::$app->basePath.'/web/uploads/'.$file->name);
+                $images->images .=$folder . ';';
+                $message->attach($folder);
             }
-        }
-
+        $message->send();
+        $images->save(false);
+        $this->goHome();
+   }
     return $this->render('form',array(
-       'Form' => $Form,
+       'model' => $model,'images' => $images
     ));
 }
     /**

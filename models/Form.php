@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use yii\web\UploadedFile;
 /**
  * This is the model class for table "form".
  *
@@ -16,16 +15,9 @@ use yii\web\UploadedFile;
  * @property string $city
  * @property string $techies
  * @property string $english_level
- * @property resource $image_1
- * @property resource $image_2
- * @property resource $image_3
- * @property resource $image_4
- * @property resource $image_5
-
  */
 class Form extends \yii\db\ActiveRecord
 {
-    public $images;
     /**
      * @inheritdoc
      */
@@ -43,7 +35,6 @@ class Form extends \yii\db\ActiveRecord
             [['name', 'email', 'age', 'height', 'weight', 'city', 'techies', 'english_level'], 'required'],
             [['name', 'city', 'techies', 'english_level'], 'string'],
             [['email'],'email'],
-            [['images'], 'file', 'extensions' => 'png, jpg', 'maxFiles' => 5],
             [['age', 'height', 'weight'], 'integer'],
         ];
     }
@@ -67,34 +58,15 @@ class Form extends \yii\db\ActiveRecord
 
         ];
     }
-    public function insertForm()
-    {
-        $Form= new Form();
-        $Form->name = $this->name;
-        $Form->email = $this->email;
-        $Form->age = $this->age;
-        $Form->height= $this->height;
-        $Form->weight= $this->weight;
-        $Form->city = $this->city;
-        $Form->techies = $this->techies;
-        $Form->english_level = $this->english_level;
-        $Form->images = UploadedFile::getInstances($Form,'images');
-        foreach($Form->images as $file){
-         $folder = ('uploads/' . $file->baseName . '.' . $file->extension);
-         $file->saveAs('uploads/' . $file->baseName . '.' . $file->extension);
-         $Form->image_1.=$folder . ';';
-        }
-        $this->contact();
-        return $Form->save(false);
-    }
-    private function contact()
+
+    public function contact($model,$images)
    {
        if ($this->validate()) {
            Yii::$app->mailer->compose()
-               ->setTo($this->email)
+               ->setTo($model->email)
                ->setFrom('ppbesta@mail.ru')
                ->setSubject('Hello From Yii2')
-               ->setTextBody('Имя' . $this->name . '' . 'Возраст' . $this->age . '' . 'Рост' . $this->height . '' . 'Вес' . $this->weight . '' . 'Нужна ли техника' . $this->techies . '' . 'Уровень английского' . $this->english_level . '' . 'Сохраненные изображения' . $this->image_1 )
+               ->setTextBody('Имя' . $model->name . '' . 'Возраст' . $model->age . '' . 'Рост' . $model->height . '' . 'Вес' . $model->weight . '' . 'Нужна ли техника' . $model->techies . '' . 'Уровень английского' . $model->english_level . '' )
                ->send();
 
            return true;
@@ -102,5 +74,7 @@ class Form extends \yii\db\ActiveRecord
            return false;
        }
    }
-
+    public function getImages(){
+        return $this->hasMany(Images::className(),['form_id' => 'id']);
+    }
 }

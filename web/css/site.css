@@ -153,7 +153,11 @@ a.desc:after {
     margin-right: 2%;
 }
 
-
+.preview img {
+    margin-left:5% ;
+    height: 70px;
+    width: 70px;
+}
 .add_photo {
     margin-top: 4%;
 }
